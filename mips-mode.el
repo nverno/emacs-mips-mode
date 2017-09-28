@@ -48,7 +48,7 @@
 
 (defun mips--interpreter-file-arg ()
   "Return the appropriate argument to accept a file for the current mips interpreter"
-  (cond ((equal mips-interpreter "spim") "-file")))
+  (cond ((equal (file-name-nondirectory mips-interpreter) "spim") "-file")))
 
 ;; -------------------------------------------------------------------
 ;;; Font-Lock
@@ -267,8 +267,9 @@
   (save-excursion
     (if (mips--label-line-p)
         (current-indentation)
-      (mips--goto-last-label-line)
-      (+ mips-tab-width (current-indentation)))))
+      (if (mips--goto-last-label-line)
+          (+ mips-tab-width (current-indentation))
+        (current-indentation)))))
 
 ;; goto last label line if there is one, otherwise nil -- moves point
 (defun mips--goto-last-label-line ()
@@ -282,7 +283,7 @@
   (let ((ci (current-indentation))
         (need (mips--calculate-indent-level)))
     (save-excursion
-      (if (and (not region) (equal last-command this-command))
+      (if (and (not region) (equal last-command 'indent-for-tab-command))
           (if (/= ci 0)
               (indent-line-to (* (/ (- ci 1) mips-tab-width) mips-tab-width))
             (indent-line-to (+ mips-tab-width need)))
@@ -318,16 +319,19 @@
   "Run the file in a mips interpreter, and display the output in another window.
 The interpreter will open filename. If filename is nil, it will open the current
 buffer's file"
-  (interactive)
-  (let ((file (or filename (buffer-file-name))))
-    (when (buffer-live-p (get-buffer (mips--interpreter-buffer-name)))
-      (kill-buffer (mips--interpreter-buffer-name)))
-    (start-process mips-interpreter
-                   (mips--interpreter-buffer-name)
-                   mips-interpreter (mips--interpreter-file-arg) file))
-  (switch-to-buffer-other-window (mips--interpreter-buffer-name))
-  (read-only-mode t)
-  (help-mode))
+  (interactive (list (or filename buffer-file-name)))
+  (when (buffer-live-p (get-buffer (mips--interpreter-buffer-name)))
+    (kill-buffer (mips--interpreter-buffer-name)))
+  (set-process-sentinel
+   (start-process mips-interpreter
+                  (mips--interpreter-buffer-name)
+                  mips-interpreter (mips--interpreter-file-arg) filename)
+   #'(lambda (p _m)
+       (with-current-buffer (mips--interpreter-buffer-name)
+         (if (not (zerop (process-exit-status p)))
+             (comint-mode)
+           (view-mode))
+         (pop-to-buffer (current-buffer))))))
 
 (defun mips-goto-label (&optional label)
   (interactive)
