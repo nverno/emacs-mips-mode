@@ -98,7 +98,8 @@ to this column."
 (defun mips--interpreter-file-arg ()
   "Return the appropriate argument to accept a file for the
 current mips interpreter"
-  (cond ((cl-member mips-interpreter '("spim" "qtspim")) "-file")))
+  (cond ((cl-member (file-name-nondirectory mips-interpreter)
+                    '("spim" "qtspim") :test 'string=) "-file")))
 
 (defun mips--last-label-line ()
   "Returns the line of the last label"
@@ -139,8 +140,7 @@ output in another window"
   (interactive)
   (let ((tmp-file (format "/tmp/mips-%s" (file-name-base (buffer-file-name)))))
     (write-region (point-min) (point-max) tmp-file nil nil nil nil)
-    (mips-run-file tmp-file)
-    (delete-file tmp-file)))
+    (mips-run-file tmp-file)))
 
 (defun mips-run-region ()
   "Run the current region in a mips interpreter, and display the
@@ -148,8 +148,7 @@ output in another window"
   (interactive)
   (let ((tmp-file (format "/tmp/mips-%s" (file-name-base (buffer-file-name)))))
     (write-region (region-beginning) (region-end) tmp-file nil nil nil nil)
-    (mips-run-file tmp-file)
-    (delete-file tmp-file)))
+    (mips-run-file tmp-file)))
 
 (defun mips-run-file (&optional filename)
   "Run the file in a mips interpreter, and display the output in another window.
