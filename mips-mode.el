@@ -109,7 +109,11 @@ current mips interpreter"
     (re-search-backward "^[a-zA-Z0-9_]*:")
     (line-number-at-pos)))
 
-;; FIXME: add imenu support for jumping to labels and such
+;; imenu
+(defvar mips-imenu-regex
+  '((nil "^\\s-*\\([a-zA-Z0-9_]+\\):" 1)
+    ("Directive" "\\s-+[.]\\([a-z]+\\)" 1)))
+
 (defun mips-goto-label (&optional label)
   (interactive)
   (let ((label (or label (read-minibuffer "Go to Label: "))))
@@ -386,7 +390,11 @@ until COLUMN."
 
   (modify-syntax-entry ?. "w" mips-mode-syntax-table)
   (modify-syntax-entry ?#  "< b" mips-mode-syntax-table)
-  (modify-syntax-entry ?\n "> b" mips-mode-syntax-table))
+  (modify-syntax-entry ?\n "> b" mips-mode-syntax-table)
+
+  ;; imenu
+  (setq imenu-create-index-function 'imenu-default-create-index-function)
+  (setq imenu-generic-expression mips-imenu-regex))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.mips\\'" . mips-mode))
