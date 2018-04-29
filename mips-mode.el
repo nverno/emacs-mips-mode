@@ -1,4 +1,4 @@
-;;; mips-mode.el --- Major-mode for MIPS assembly
+;;; mips-mode.el --- Major-mode for MIPS assembly -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2016-2018 Henrik Lissner
 ;;
@@ -57,14 +57,14 @@
 to this column."
   :tag "Operands column."
   :group 'mips
-  :initialize (lambda (s v) (set-default s (+ 4 (* 2 mips-operator-column))))
+  :initialize (lambda (s _v) (set-default s (+ 4 (* 2 mips-operator-column))))
   :type 'integer)
 
 (defcustom mips-comments-column 30
   "Comments are indented to this column."
   :tag "Comment column."
   :group 'mips
-  :initialize (lambda (s v) (set-default s (+ 20 mips-operands-column)))
+  :initialize (lambda (s _v) (set-default s (+ 20 mips-operands-column)))
   :type 'integer)
 
 (defcustom mips-after-indent-hook 'mips-cycle-point
@@ -98,12 +98,12 @@ to this column."
 (defun mips--interpreter-file-arg ()
   "Return the appropriate argument to accept a file for the
 current mips interpreter"
-  (cond ((equal mips-interpreter "spim") "-file")))
+  (cond ((cl-member mips-interpreter '("spim" "qtspim")) "-file")))
 
 (defun mips--last-label-line ()
   "Returns the line of the last label"
   (save-excursion
-    (previous-line)
+    (forward-line -1)
     (end-of-line)
     (re-search-backward "^[a-zA-Z0-9_]*:")
     (line-number-at-pos)))
@@ -137,7 +137,7 @@ current mips interpreter"
   "Run the current buffer in a mips interpreter, and display the
 output in another window"
   (interactive)
-  (let ((tmp-file (format "/tmp/mips-%s" (file-name-base))))
+  (let ((tmp-file (format "/tmp/mips-%s" (file-name-base (buffer-file-name)))))
     (write-region (point-min) (point-max) tmp-file nil nil nil nil)
     (mips-run-file tmp-file)
     (delete-file tmp-file)))
@@ -146,7 +146,7 @@ output in another window"
   "Run the current region in a mips interpreter, and display the
 output in another window"
   (interactive)
-  (let ((tmp-file (format "/tmp/mips-%s" (file-name-base))))
+  (let ((tmp-file (format "/tmp/mips-%s" (file-name-base (buffer-file-name)))))
     (write-region (region-beginning) (region-end) tmp-file nil nil nil nil)
     (mips-run-file tmp-file)
     (delete-file tmp-file)))
@@ -155,7 +155,7 @@ output in another window"
   "Run the file in a mips interpreter, and display the output in another window.
 The interpreter will open filename. If filename is nil, it will open the current
 buffer's file"
-  (interactive (list (or filename buffer-file-name)))
+  (interactive (list (buffer-file-name)))
   (when (buffer-live-p (get-buffer (mips--interpreter-buffer-name)))
     (kill-buffer (mips--interpreter-buffer-name)))
   (set-process-sentinel
@@ -206,12 +206,12 @@ until COLUMN."
         (if (< (current-column) column)
           (insert mips-indent-character)
           (if (member (preceding-char) mips-wp-char)
-            (delete-backward-char 1)
+              (delete-char -1)
             (progn (message "Bumped into a wall at column %s!" (current-column))
                    (insert mips-indent-character) ;; pad one whitespace
                    (move-to-column column t)      ;; and bail out forward.
                    (while (member (char-after) mips-wp-char)
-                     (delete-forward-char 1)))))))))
+                     (delete-char 1)))))))))
 
 (defun mips-indent-line (&optional suppress-hook)
   "Indent MIPS assembly line at point and run hook."
@@ -244,11 +244,11 @@ until COLUMN."
     (untabify (line-beginning-position first-line)
               (line-end-position last-line))
     (save-mark-and-excursion
-     (goto-line first-line)
-     (while (and (<= (line-number-at-pos (point)) last-line)
-                 (not (eobp)))
-       (funcall indent-line-function t)
-       (forward-line)))
+      (goto-char (point-min))
+      (while (and (<= (line-number-at-pos (point)) last-line)
+                  (not (eobp)))
+        (funcall indent-line-function t)
+        (forward-line)))
     (delete-trailing-whitespace start end)))
 
 (defun mips-auto-indent ()
