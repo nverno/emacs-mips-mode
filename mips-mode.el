@@ -362,7 +362,7 @@ until COLUMN."
     ;; Comparisons
     "slt" "sltu" "slti" "sltiu"
     ;; Move data
-    "mfhi" "mthi" "mfl" "mtl" "movn" "movz" "movf"
+    "mfhi" "mthi" "mflo" "mtlo" "movn" "movz" "movf"
     "movt"
     ;; Jump
     "j" "jal" "jalr" "jr"
