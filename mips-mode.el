@@ -446,10 +446,10 @@ until COLUMN."
   "Major mode for editing MIPS assembler code."
   (setq font-lock-defaults mips-font-lock-defaults
         comment-start "#"
-        comment-end ""
-        indent-line-function 'mips-indent-line
-        indent-region-function 'mips-indent-region
-        indent-tabs-mode nil)
+        comment-end "")
+  (setq-local indent-region-function 'mips-indent-region)
+  (setq-local indent-line-function 'mips-indent-region)
+  (setq-local indent-tabs-mode nil)
   (when mips-tab-width
     (setq tab-width mips-tab-width))
 
