@@ -4,6 +4,7 @@
 ;;
 ;; Author: Henrik Lissner <http://github/hlissner>
 ;; Maintainer: Henrik Lissner <henrik@lissner.net>
+;; URL: https://github.com/nverno/emacs-mips-mode
 ;; Created: September 8, 2016
 ;; Modified: March 21, 2018
 ;; Version: 1.1.1
@@ -136,30 +137,6 @@ current mips interpreter"
                (y-or-n-p "Sanitize (untabify/re-indent) buffer? "))
       (mips-indent-region (point-min) (point-max)))))
 
-(defun mips-previous-label ()
-  "Goto previous label"
-  (interactive)
-  (condition-case nil
-      (progn
-        (forward-line -1)
-        (re-search-backward "^[ \t]*[a-zA-Z0-9_]+:")
-        (beginning-of-line))
-    (error
-     (forward-line 1)
-     (user-error "No previous label"))))
-
-(defun mips-next-label ()
-  "Goto next label"
-  (interactive)
-  (condition-case nil
-      (progn
-        (forward-line 1)
-        (re-search-forward "^[ \t]*[a-zA-Z0-9_.]+:")
-        (beginning-of-line))
-    (error
-     (forward-line -1)
-     (user-error "No previous label"))))
-
 ;;; Interpreter
 
 (defun mips-run-buffer ()
@@ -291,7 +268,7 @@ until COLUMN."
   (deactivate-mark)
   (indent-line-to mips-baseline-column))
 
-(defun mips-newline-dwim ()
+(defun mips-newline ()
   "`newline' for MIPS assembly." ;; to handle comment lines
   (interactive)
   (cond ((mips-comment-line-p)
@@ -428,13 +405,13 @@ until COLUMN."
 
 (defvar mips-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "<backtab>") #'mips-dedent)
-    (define-key map (kbd "RET")       #'mips-newline-dwim)
-    (define-key map (kbd "C-c C-c")   #'mips-run-buffer)
-    (define-key map (kbd "C-c C-r")   #'mips-run-region)
-    (define-key map (kbd "C-c C-l")   #'mips-goto-label-at-cursor)
-    (define-key map (kbd "M-N")       #'mips-next-label)
-    (define-key map (kbd "M-P")       #'mips-previous-label)
+    (define-key map (kbd "<backtab>")           #'mips-dedent)
+    (define-key map [remap newline-and-indent]  #'mips-newline)
+    (define-key map (kbd "C-c C-c")             #'mips-run-buffer)
+    (define-key map (kbd "C-c C-r")             #'mips-run-region)
+    (define-key map (kbd "C-c C-l")             #'mips-goto-label-at-cursor)
+    (define-key map (kbd "M-N")                 #'mips-next-label)
+    (define-key map (kbd "M-P")                 #'mips-previous-label)
     map)
   "Keymap for mips-mode")
 
@@ -444,11 +421,11 @@ until COLUMN."
 ;;;###autoload
 (define-derived-mode mips-mode prog-mode "MIPS Assembly"
   "Major mode for editing MIPS assembler code."
-  (setq font-lock-defaults mips-font-lock-defaults
-        comment-start "#"
-        comment-end "")
-  (setq-local indent-region-function 'mips-indent-region)
-  (setq-local indent-line-function 'mips-indent-region)
+  (setq font-lock-defaults mips-font-lock-defaults)
+  (setq-local comment-start "#")
+  (setq-local comment-end "")
+  (setq-local indent-region-function #'mips-indent-region)
+  (setq-local indent-line-function #'mips-indent-line)
   (setq-local indent-tabs-mode nil)
   (when mips-tab-width
     (setq tab-width mips-tab-width))
@@ -460,7 +437,7 @@ until COLUMN."
   (modify-syntax-entry ?\n "> b" mips-mode-syntax-table)
 
   ;; imenu
-  (setq imenu-create-index-function 'imenu-default-create-index-function)
+  (setq imenu-create-index-function #'imenu-default-create-index-function)
   (setq imenu-generic-expression mips-imenu-regex))
 
 ;;;###autoload
