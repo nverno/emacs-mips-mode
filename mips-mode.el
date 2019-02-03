@@ -6,9 +6,8 @@
 ;; Maintainer: Henrik Lissner <henrik@lissner.net>
 ;; URL: https://github.com/nverno/emacs-mips-mode
 ;; Created: September 8, 2016
-;; Modified: March 21, 2018
-;; Version: 1.1.1
-;; Package-Version: 20180321.211
+;; Modified: May 2, 2018
+;; Version: 1.1.2
 ;; Keywords: languages mips assembly
 ;; Homepage: https://github.com/hlissner/emacs-mips-mode
 ;;
@@ -68,7 +67,7 @@ to this column."
   :initialize (lambda (s _v) (set-default s (+ 20 mips-operands-column)))
   :type 'integer)
 
-(defcustom mips-after-indent-hook 'mips-cycle-point
+(defcustom mips-after-indent-hook #'mips-cycle-point
   "Function to call after indenting."
   :tag "Indent callback."
   :group 'mips
@@ -405,13 +404,11 @@ until COLUMN."
 
 (defvar mips-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "<backtab>")           #'mips-dedent)
-    (define-key map [remap newline-and-indent]  #'mips-newline)
-    (define-key map (kbd "C-c C-c")             #'mips-run-buffer)
-    (define-key map (kbd "C-c C-r")             #'mips-run-region)
-    (define-key map (kbd "C-c C-l")             #'mips-goto-label-at-cursor)
-    (define-key map (kbd "M-N")                 #'mips-next-label)
-    (define-key map (kbd "M-P")                 #'mips-previous-label)
+    (define-key map [remap newline-and-indent] #'mips-newline)
+    (define-key map (kbd "<backtab>") #'mips-dedent)
+    (define-key map (kbd "C-c C-c")   #'mips-run-buffer)
+    (define-key map (kbd "C-c C-r")   #'mips-run-region)
+    (define-key map (kbd "C-c C-l")   #'mips-goto-label-at-cursor)
     map)
   "Keymap for mips-mode")
 
@@ -421,15 +418,13 @@ until COLUMN."
 ;;;###autoload
 (define-derived-mode mips-mode prog-mode "MIPS Assembly"
   "Major mode for editing MIPS assembler code."
-  (setq font-lock-defaults mips-font-lock-defaults)
+  (setq-local font-lock-defaults mips-font-lock-defaults)
   (setq-local comment-start "#")
   (setq-local comment-end "")
-  (setq-local indent-region-function #'mips-indent-region)
   (setq-local indent-line-function #'mips-indent-line)
+  (setq-local indent-region-function #'mips-indent-region)
   (setq-local indent-tabs-mode nil)
-  (when mips-tab-width
-    (setq tab-width mips-tab-width))
-
+  (setq-local tab-width (or mips-tab-width tab-width))
   (mips-sanitize-buffer)
 
   (modify-syntax-entry ?. "w" mips-mode-syntax-table)
