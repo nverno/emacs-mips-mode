@@ -432,8 +432,9 @@ until COLUMN."
   (modify-syntax-entry ?\n "> b" mips-mode-syntax-table)
 
   ;; imenu
-  (setq imenu-create-index-function #'imenu-default-create-index-function)
-  (setq imenu-generic-expression mips-imenu-regex))
+  (when (fboundp 'imenu-default-create-index-function)
+    (setq imenu-create-index-function #'imenu-default-create-index-function)
+    (setq imenu-generic-expression mips-imenu-regex)))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.mips\\'" . mips-mode))
